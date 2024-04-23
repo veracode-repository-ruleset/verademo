@@ -51,40 +51,41 @@ jobs:
             debug: 1
             fail_build: false
 
-  results_to_sarif:
-    needs: pipeline_scan
-    runs-on: ubuntu-latest
-    name: import pipeline results to sarif
-    steps:
-      - name: get flaw file
-        uses: actions/download-artifact@v2
-        with:
-          name: Veracode Pipeline-Scan Results
-      - name: Convert pipeline scan output to SARIF format
-        id: convert
-        uses: Veracode/veracode-pipeline-scan-results-to-sarif@support-saf-scanners
-        #uses: Veracode/veracode-pipeline-scan-results-to-sarif@v1.0.6
-        with:
-          pipeline-results-json: results.json
-          output-results-sarif: veracode-results.sarif
+  # results_to_sarif:
+  #   needs: pipeline_scan
+  #   runs-on: ubuntu-latest
+  #   name: import pipeline results to sarif
+  #   steps:
+  #     - name: get flaw file
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: Veracode Pipeline-Scan Results
+  #     - name: Convert pipeline scan output to SARIF format
+  #       id: convert
+  #       uses: Veracode/veracode-pipeline-scan-results-to-sarif@support-saf-scanners
+  #       #uses: Veracode/veracode-pipeline-scan-results-to-sarif@v1.0.6
+  #       with:
+  #         pipeline-results-json: results.json
+  #         output-results-sarif: veracode-results.sarif
 
-      - name: upload sarif file to repository
-        uses: github/codeql-action/upload-sarif@v2
-        with: # Path to SARIF file relative to the root of the repository
-          sarif_file: veracode-results.sarif
+  #     - name: upload sarif file to repository
+  #       uses: github/codeql-action/upload-sarif@v2
+  #       with: # Path to SARIF file relative to the root of the repository
+  #         sarif_file: veracode-results.sarif
             
 # This step will import flaws from the step above
   import-pipeline-flaws:
     needs: pipeline_scan
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     steps:
-      - name: get flaw file
-        uses: actions/download-artifact@v2
+      - name: get scan results
+        uses: actions/download-artifact@v3
         with:
-          name: Veracode Pipeline-Scan Results
-          path: /tmp
+          name: filtered-results
 
       - name: import flaws as issues
-        uses: veracode/veracode-flaws-to-issues@v2.1.18
+        uses: veracode/veracode-flaws-to-issues@v2.1.19
         with:
-          scan-results-json: '/tmp/filtered_results.json'
+          scan-results-json: 'filtered_results.json'
