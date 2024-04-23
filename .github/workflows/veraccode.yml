@@ -80,7 +80,12 @@ jobs:
     permissions:
       issues: write
     steps:
+      - name: get flaw file
+        uses: actions/download-artifact@v2
+        with:
+          name: Veracode Pipeline-Scan Results
+          path: /tmp
       - name: import flaws as issues
         uses: veracode/veracode-flaws-to-issues@v2.1.19
         with:
-          scan-results-json: 'filtered_results.json'
+          scan-results-json: '/tmp/filtered_results.json'
