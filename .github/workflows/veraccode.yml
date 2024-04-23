@@ -80,11 +80,6 @@ jobs:
     permissions:
       issues: write
     steps:
-      - name: get scan results
-        uses: actions/download-artifact@v3
-        with:
-          name: filtered-results
-
       - name: import flaws as issues
         uses: veracode/veracode-flaws-to-issues@v2.1.19
         with:
