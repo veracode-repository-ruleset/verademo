@@ -53,6 +53,36 @@ jobs:
             #create_baseline_from: "standard"
             debug: 1
             fail_build: false
+        - uses: actions/upload-artifact@v4
+          with:
+            name: Veracode Pipeline-Scan Results
+            path: filtered_results.json 
+
+  veracode-fix:
+    runs-on: ubuntu-latest
+    needs: pipeline_scan
+    name: Veracode Fix
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v3
+
+      - name: get flaw file
+        uses: actions/download-artifact@v4
+        with:
+          name: Veracode Pipeline-Scan Results
+          
+      - name: Create fixes from static findings
+        id: convert
+        uses: Veracode/veracode-fix@main
+        with:
+          inputFile: filtered_results.json
+          vid: ${{ secrets.VID }}
+          vkey: ${{ secrets.VKEY }}
+          source_base_path_1: "com/:src/main/java/com/"
+          source_base_path_2: "WEB-INF:src/main/webapp/WEB-INF"
+          language: java
+          prComment: true
+          fixType: single
 
   # results_to_sarif:
   #   needs: pipeline_scan
@@ -77,18 +107,18 @@ jobs:
   #         sarif_file: veracode-results.sarif
             
 # This step will import flaws from the step above
-  import-pipeline-flaws:
-    needs: pipeline_scan
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-    steps:
-      - name: get flaw file
-        uses: actions/download-artifact@v2
-        with:
-          name: Veracode Pipeline-Scan Results
-          path: /tmp
-      - name: import flaws as issues
-        uses: veracode/veracode-flaws-to-issues@v2.1.19
-        with:
-          scan-results-json: '/tmp/filtered_results.json'
+  # import-pipeline-flaws:
+  #   needs: pipeline_scan
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     issues: write
+  #   steps:
+  #     - name: get flaw file
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: Veracode Pipeline-Scan Results
+  #         path: /tmp
+  #     - name: import flaws as issues
+  #       uses: veracode/veracode-flaws-to-issues@v2.1.19
+  #       with:
+  #         scan-results-json: '/tmp/filtered_results.json'
